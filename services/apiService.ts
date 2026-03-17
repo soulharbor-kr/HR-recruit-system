@@ -91,31 +91,30 @@ export const apiService = {
   getApplicants: async (): Promise<Applicant[]> => {
     if (isSupabaseConfigured()) {
       try {
-        const { data, error } = await supabase.storage
+        const { data, error } = await supabase
           .from('applicants')
-          .list('', { sortBy: { column: 'name', order: 'asc' } });
+          .select('*')
+          .order('id', { ascending: true });
 
         if (error) throw error;
 
         if (data && data.length > 0) {
-          return data
-            .filter(file => file.name.toLowerCase().endsWith('.pdf'))
-            .map(file => {
-              const { data: urlData } = supabase.storage
-                .from('applicants')
-                .getPublicUrl(file.name);
-              return {
-                id: file.name.replace('.pdf', ''),
-                name: parseNameFromFilename(file.name),
-                position: '신입 공채',
-                applicationDate: new Date().toISOString().split('T')[0],
-                pdfUrl: urlData.publicUrl,
-                originalFilename: file.name,
-              };
-            });
+          return data.map((row: any) => {
+            const { data: urlData } = supabase.storage
+              .from('applicants')
+              .getPublicUrl(row.file_path);
+            return {
+              id: row.id,
+              name: row.name,
+              position: row.position,
+              applicationDate: row.application_date || new Date().toISOString().split('T')[0],
+              pdfUrl: urlData.publicUrl,
+              originalFilename: row.file_path,
+            };
+          });
         }
       } catch (e) {
-        console.warn('Supabase Storage fetch failed. Falling back to hardcoded list.', e);
+        console.warn('Supabase applicants fetch failed. Falling back to hardcoded list.', e);
       }
     }
 
