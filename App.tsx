@@ -199,18 +199,21 @@ function App() {
               로그인
             </Button>
             
-            <div className="mt-6 border-t pt-4">
-               <h3 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Server Connection Setup</h3>
-               <div className="bg-slate-50 p-3 rounded text-xs text-slate-600 space-y-2">
-                 <p className="flex items-start">
-                   <AlertCircle className="w-3 h-3 mr-1 mt-0.5 text-blue-500 shrink-0" />
-                   <span><b>lib/supabase.ts</b> 파일에 Project URL과 API Key를 입력하세요.</span>
-                 </p>
-                 <p className="text-slate-400 mt-1 pl-4">
-                   현재 설정이 비어있어 <b>테스트 모드(Mock Data)</b>로 실행됩니다.
-                 </p>
-               </div>
-            </div>
+            {!apiService.isServerConnected() && (
+              <div className="mt-6 border-t pt-4">
+                <h3 className="text-xs font-bold text-slate-500 mb-2 uppercase tracking-wide">Server Connection Setup</h3>
+                <div className="bg-slate-50 p-3 rounded text-xs text-slate-600 space-y-2">
+                  <p className="flex items-start">
+                    <AlertCircle className="w-3 h-3 mr-1 mt-0.5 text-blue-500 shrink-0" />
+                    <span>Supabase 환경변수가 설정되지 않았습니다.</span>
+                  </p>
+                  <p className="text-slate-400 mt-1 pl-4">
+                    현재 <b>테스트 모드(Mock Data)</b>로 실행됩니다.<br />
+                    계정: eval1 / 123
+                  </p>
+                </div>
+              </div>
+            )}
           </form>
 
           {/* Dev Plan Trigger */}
