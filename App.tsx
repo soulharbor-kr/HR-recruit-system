@@ -364,7 +364,7 @@ function App() {
                   지원서류: {selectedApplicant.originalFilename}
                 </span>
                 <span className="text-xs text-slate-400 bg-slate-800 px-2 py-1 rounded">
-                    Google Drive 연결됨
+                    Supabase Storage 연결됨
                 </span>
               </div>
               <div className="flex-1 bg-white relative">
