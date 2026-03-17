@@ -1,4 +1,4 @@
-import { supabase } from '../lib/supabase';
+import { supabase, SUPABASE_URL } from '../lib/supabase';
 import { Applicant, EvaluationData, Evaluator } from '../types';
 
 // --- MOCK DATA FOR FALLBACK ---
@@ -33,13 +33,7 @@ const parseNameFromFilename = (filename: string): string => {
 };
 
 const isSupabaseConfigured = () => {
-    // Check if the URL is the placeholder from the template or our fallback
-    // @ts-ignore
-    const url = (supabase as any).supabaseUrl || '';
-    if (!url || url.includes('YOUR_SUPABASE_URL') || url.includes('fallback-mock')) {
-        return false;
-    }
-    return true;
+    return !!(SUPABASE_URL && SUPABASE_URL.startsWith('http') && !SUPABASE_URL.includes('fallback-mock'));
 };
 
 export const apiService = {
