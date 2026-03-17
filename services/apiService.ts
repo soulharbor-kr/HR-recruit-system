@@ -21,12 +21,12 @@ const STORAGE_KEY = 'hr_eval_system_data_fallback';
 
 const parseNameFromFilename = (filename: string): string => {
   try {
-    const namePart = filename.replace('.pdf', '');
-    const parts = namePart.split('.');
-    if (parts.length >= 2) {
-      return parts[1].trim();
-    }
-    return namePart;
+    const namePart = filename.replace(/\.pdf$/i, '');
+    // "01_김수진" 형식
+    if (namePart.includes('_')) return namePart.split('_').slice(1).join('_').trim();
+    // "01. 김수진" 형식 (구버전 호환)
+    if (namePart.includes('.')) return namePart.split('.').slice(1).join('.').trim();
+    return namePart.trim();
   } catch (e) {
     return filename;
   }
