@@ -10,11 +10,11 @@ const MOCK_EVALUATORS: Evaluator[] = [
 ];
 
 const DRIVE_FILES = [
-  { filename: "01. 김철수.pdf", id: "1A79zCGrFTC9Xt1niLVv8oYgSVfDNppvX" },
-  { filename: "02. 이영희.pdf", id: "12mBcEtHf45HFCJsrNgeGtobOA25pM2Yi" },
-  { filename: "03. 박민수.pdf", id: "1F5MZkGk7V5MyMRqArRAnGcpQ1PBM2Hd2" },
-  { filename: "04. 정지원.pdf", id: "1vE5onh8X0bH1pULGXKBXkD8UUhloUbHD" },
-  { filename: "05. 최성실.pdf", id: "1zky3v8uFgX9ucm3XZCDnenVRgqlRknSZ" }
+  { filename: "01. 김수진.pdf", id: "1l-bgGdBaUFq-a317XONdk0Ss_4tSFte0" },
+  { filename: "02. 방민정.pdf", id: "1cwIBFAWriGHD7wC9F4_DsGkDGMC4lD9g" },
+  { filename: "03. 김나경.pdf", id: "1mwb_Sm4wbK8uiq-q0vfks80tVpbH4t8M" },
+  { filename: "04. 조영윤.pdf", id: "1Y93d6vA3KsRtBu3O7RmCLQYqnaXt8cR9" },
+  { filename: "05. 천민정.pdf", id: "1RZymeeZoNrGXUihPXV_Cy5g_lnZqrsli" },
 ];
 
 const STORAGE_KEY = 'hr_eval_system_data_fallback';
