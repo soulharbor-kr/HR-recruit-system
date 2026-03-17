@@ -89,22 +89,47 @@ export const apiService = {
   },
 
   getApplicants: async (): Promise<Applicant[]> => {
-    // Drive Files are currently hardcoded. 
-    // If you want to fetch from Supabase, you would need an 'applicants' table.
-    // For now, we simulate API delay.
-    await new Promise(resolve => setTimeout(resolve, 300));
+    if (isSupabaseConfigured()) {
+      try {
+        const { data, error } = await supabase.storage
+          .from('applicants')
+          .list('', { sortBy: { column: 'name', order: 'asc' } });
 
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          return data
+            .filter(file => file.name.toLowerCase().endsWith('.pdf'))
+            .map(file => {
+              const { data: urlData } = supabase.storage
+                .from('applicants')
+                .getPublicUrl(file.name);
+              return {
+                id: file.name.replace('.pdf', ''),
+                name: parseNameFromFilename(file.name),
+                position: '신입 공채',
+                applicationDate: new Date().toISOString().split('T')[0],
+                pdfUrl: urlData.publicUrl,
+                originalFilename: file.name,
+              };
+            });
+        }
+      } catch (e) {
+        console.warn('Supabase Storage fetch failed. Falling back to hardcoded list.', e);
+      }
+    }
+
+    // Fallback: hardcoded Google Drive files
+    await new Promise(resolve => setTimeout(resolve, 300));
     return DRIVE_FILES.map((file, index) => {
       const name = parseNameFromFilename(file.filename);
-      const previewUrl = `https://drive.google.com/file/d/${file.id}/preview`;
-
       return {
         id: `drive_file_${index + 1}`,
-        name: name,
-        position: '신입 공채', 
+        name,
+        position: '신입 공채',
         applicationDate: new Date().toISOString().split('T')[0],
-        pdfUrl: previewUrl,
-        originalFilename: file.filename
+        pdfUrl: `https://drive.google.com/file/d/${file.id}/preview`,
+        originalFilename: file.filename,
       };
     });
   },
