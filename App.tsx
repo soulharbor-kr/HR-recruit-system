@@ -30,7 +30,8 @@ function App() {
   // Selection State
   const [selectedApplicant, setSelectedApplicant] = useState<Applicant | null>(null);
   const [currentScores, setCurrentScores] = useState(INITIAL_SCORES);
-  
+  const [currentComment, setCurrentComment] = useState('');
+
   // UI State
   const [isLoading, setIsLoading] = useState(false);
   const [dataLoading, setDataLoading] = useState(false);
@@ -114,8 +115,10 @@ function App() {
 
     if (existing) {
       setCurrentScores(existing.scores);
+      setCurrentComment(existing.comment || '');
     } else {
       setCurrentScores(INITIAL_SCORES);
+      setCurrentComment('');
     }
     
     setSelectedApplicant(applicant);
@@ -137,6 +140,7 @@ function App() {
       evaluatorId: currentUser.id,
       scores: currentScores,
       total,
+      comment: currentComment,
       submittedAt: new Date().toISOString()
     };
 
@@ -393,6 +397,16 @@ function App() {
                     onChange={(val) => handleScoreChange(category.id, val)}
                   />
                 ))}
+                <div className="bg-white p-4 rounded-lg border border-slate-200 shadow-sm">
+                  <h4 className="font-semibold text-slate-800 mb-2">특이사항 / 종합 의견</h4>
+                  <textarea
+                    value={currentComment}
+                    onChange={(e) => setCurrentComment(e.target.value)}
+                    placeholder="면접 중 특이사항이나 종합 의견을 자유롭게 입력하세요. (선택사항)"
+                    className="w-full border border-slate-300 rounded-md p-3 text-sm text-slate-700 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    rows={4}
+                  />
+                </div>
               </div>
 
               <div className="p-4 border-t border-slate-100 bg-slate-50 rounded-b-lg flex gap-3">
