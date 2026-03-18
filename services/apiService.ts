@@ -76,10 +76,10 @@ export const apiService = {
             const { data, error } = await supabase
                 .from('evaluators')
                 .select('*')
-                .eq('role', 'evaluator');
-            
+                .neq('role', 'admin');
+
             if (error) throw error;
-            return data as Evaluator[];
+            if (data && data.length > 0) return data as Evaluator[];
         } catch (e) {
             console.warn('Supabase getEvaluators failed.', e);
         }
