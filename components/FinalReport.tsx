@@ -14,24 +14,24 @@ export const FinalReport: React.FC<FinalReportProps> = ({ applicants, evaluators
     window.print();
   };
 
-  // Helper to get score
-  const getScore = (appId: string, evalId: string) => {
+  // Helper to get score - null means not submitted
+  const getScore = (appId: string, evalId: string): number | null => {
     const evaluation = allEvaluations.find(e => e.applicantId === appId && e.evaluatorId === evalId);
-    return evaluation ? evaluation.total : 0;
+    return evaluation ? evaluation.total : null;
   };
 
-  const getRank = (appId: string, sortedApps: {id: string, total: number}[]) => {
+  const getRank = (appId: string, sortedApps: {id: string, total: number | null}[]) => {
     const index = sortedApps.findIndex(a => a.id === appId);
     return index + 1;
   };
 
-  // Calculate totals for ranking
+  // Calculate totals for ranking (only count submitted evaluations)
   const applicantStats = applicants.map(app => {
-    const appScores = evaluators.map(ev => getScore(app.id, ev.id));
-    const totalScore = appScores.reduce((a, b) => a + b, 0);
-    const avgScore = totalScore / evaluators.length;
+    const appScores = evaluators.map(ev => getScore(app.id, ev.id)).filter(s => s !== null) as number[];
+    const totalScore = appScores.length > 0 ? appScores.reduce((a, b) => a + b, 0) : null;
+    const avgScore = appScores.length > 0 ? appScores.reduce((a, b) => a + b, 0) / appScores.length : null;
     return { id: app.id, total: totalScore, avg: avgScore };
-  }).sort((a, b) => b.total - a.total);
+  }).sort((a, b) => (b.total ?? -1) - (a.total ?? -1));
 
   return (
     <div className="fixed inset-0 bg-white z-50 overflow-auto flex flex-col">
@@ -85,12 +85,12 @@ export const FinalReport: React.FC<FinalReportProps> = ({ applicants, evaluators
                     const score = getScore(app.id, ev.id);
                     return (
                       <td key={ev.id} className="border border-black p-2">
-                        {score > 0 ? score : '-'}
+                        {score !== null ? score : '-'}
                       </td>
                     );
                   })}
-                  <td className="border border-black p-2 font-bold bg-blue-50">{total}</td>
-                  <td className="border border-black p-2 font-bold bg-blue-50">{avg.toFixed(1)}</td>
+                  <td className="border border-black p-2 font-bold bg-blue-50">{total !== null ? total : '-'}</td>
+                  <td className="border border-black p-2 font-bold bg-blue-50">{avg !== null ? avg.toFixed(1) : '-'}</td>
                   <td className="border border-black p-2"></td>
                 </tr>
               );

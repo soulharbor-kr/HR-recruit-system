@@ -3,10 +3,10 @@ import { Button } from './components/Button';
 import { Input } from './components/Input';
 import { ScoreSlider } from './components/ScoreSlider';
 import { FinalReport } from './components/FinalReport';
-import { DevPlan } from './components/DevPlan'; // Import DevPlan
+import { DevPlan } from './components/DevPlan';
 import { apiService } from './services/apiService';
 import { Applicant, Evaluator, EvaluationData, CATEGORIES } from './types';
-import { FileText, LogOut, CheckCircle, User, BarChart2, Cloud, AlertCircle, CloudOff } from 'lucide-react';
+import { FileText, LogOut, CheckCircle, User, BarChart2, Cloud, AlertCircle, CloudOff, Shield, Clock } from 'lucide-react';
 
 const INITIAL_SCORES = {
   jobCompetency: 10,
@@ -255,76 +255,189 @@ function App() {
     );
   }
 
-  const EvaluatorDashboard = () => {
+  const ConnectionStatus = () => {
     const isConnected = apiService.isServerConnected();
+    return isConnected ? (
+      <div className="flex items-center text-sm text-green-600 mt-1">
+        <Cloud className="w-4 h-4 mr-1" /><span>Supabase 연동됨</span>
+      </div>
+    ) : (
+      <div className="flex items-center text-sm text-orange-500 mt-1">
+        <CloudOff className="w-4 h-4 mr-1" /><span>테스트 모드 (데이터가 로컬 브라우저에만 저장됨)</span>
+      </div>
+    );
+  };
+
+  const AdminDashboard = () => {
+    const totalCount = evaluators.length * applicants.length;
+    const doneCount = evaluations.length;
+    const progressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
     return (
-        <div className="max-w-6xl mx-auto">
-          <div className="flex justify-between items-center mb-8">
-            <div>
-              <h2 className="text-2xl font-bold text-slate-800">지원자 목록</h2>
-              {isConnected ? (
-                <div className="flex items-center text-sm text-green-600 mt-1">
-                   <Cloud className="w-4 h-4 mr-1" />
-                   <span>Supabase & Google Drive 연동됨</span>
-                </div>
-              ) : (
-                <div className="flex items-center text-sm text-orange-500 mt-1">
-                   <CloudOff className="w-4 h-4 mr-1" />
-                   <span>테스트 모드 (데이터가 로컬 브라우저에만 저장됨)</span>
-                </div>
-              )}
+      <div className="max-w-6xl mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-1">
+              <Shield className="w-5 h-5 text-blue-600" />
+              <h2 className="text-2xl font-bold text-slate-800">관리자 대시보드</h2>
             </div>
-            <div className="space-x-2">
-                <Button variant="secondary" onClick={() => setView('report')}>
-                    <BarChart2 className="w-4 h-4 mr-2 inline" />
-                    종합 결과 보기
-                </Button>
-            </div>
+            <ConnectionStatus />
           </div>
-    
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {applicants.map(app => {
-              const isDone = evaluations.some(e => e.applicantId === app.id && e.evaluatorId === currentUser?.id);
-              const myScore = evaluations.find(e => e.applicantId === app.id && e.evaluatorId === currentUser?.id)?.total;
-    
-              return (
-                <div key={app.id} className={`bg-white rounded-lg shadow-sm border p-6 transition-all hover:shadow-md ${isDone ? 'border-green-200 bg-green-50' : 'border-slate-200'}`}>
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 className="text-lg font-bold text-slate-800">{app.name}</h3>
-                      <p className="text-xs text-slate-400 mt-1 flex items-center">
-                        <FileText className="w-3 h-3 mr-1" />
-                        {app.originalFilename}
-                      </p>
-                    </div>
-                    {isDone ? (
-                      <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex items-center">
-                        <CheckCircle className="w-3 h-3 mr-1" /> 완료 ({myScore}점)
-                      </span>
-                    ) : (
-                      <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold">대기중</span>
-                    )}
-                  </div>
-                  
-                  <div className="text-sm text-slate-500 mb-6">
-                    <p>지원일자: {app.applicationDate}</p>
-                  </div>
-    
-                  <Button 
-                    onClick={() => startEvaluation(app)} 
-                    variant={isDone ? 'secondary' : 'primary'}
-                    className="w-full"
-                  >
-                    {isDone ? '평가 수정하기' : '평가 시작하기'}
-                  </Button>
-                </div>
-              );
-            })}
+          <Button onClick={() => setView('report')}>
+            <BarChart2 className="w-4 h-4 mr-2 inline" />
+            종합 결과 보기
+          </Button>
+        </div>
+
+        {/* Progress Summary */}
+        <div className="grid grid-cols-3 gap-4 mb-8">
+          <div className="bg-white rounded-lg border border-slate-200 p-4 text-center shadow-sm">
+            <div className="text-3xl font-bold text-blue-600">{applicants.length}</div>
+            <div className="text-sm text-slate-500 mt-1">전체 지원자</div>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4 text-center shadow-sm">
+            <div className="text-3xl font-bold text-slate-700">{evaluators.length}</div>
+            <div className="text-sm text-slate-500 mt-1">평가위원 수</div>
+          </div>
+          <div className="bg-white rounded-lg border border-slate-200 p-4 text-center shadow-sm">
+            <div className="text-3xl font-bold text-green-600">{progressPct}%</div>
+            <div className="text-sm text-slate-500 mt-1">평가 완료율 ({doneCount}/{totalCount})</div>
           </div>
         </div>
-      );
+
+        {/* Evaluation Progress Matrix */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden mb-8">
+          <div className="p-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-bold text-slate-700">평가 진행 현황</h3>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-50 border-b border-slate-200">
+                  <th className="text-left p-3 font-semibold text-slate-600 w-32">지원자</th>
+                  {evaluators.map(ev => (
+                    <th key={ev.id} className="p-3 font-semibold text-slate-600 text-center">{ev.name}</th>
+                  ))}
+                  <th className="p-3 font-semibold text-slate-600 text-center w-20">완료율</th>
+                </tr>
+              </thead>
+              <tbody>
+                {applicants.map(app => {
+                  const doneEvals = evaluators.filter(ev =>
+                    evaluations.some(e => e.applicantId === app.id && e.evaluatorId === ev.id)
+                  );
+                  return (
+                    <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="p-3 font-medium text-slate-800">{app.name}</td>
+                      {evaluators.map(ev => {
+                        const eval_ = evaluations.find(e => e.applicantId === app.id && e.evaluatorId === ev.id);
+                        return (
+                          <td key={ev.id} className="p-3 text-center">
+                            {eval_ ? (
+                              <span className="inline-flex items-center justify-center gap-1 text-green-700 font-bold">
+                                <CheckCircle className="w-4 h-4" /> {eval_.total}점
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center justify-center gap-1 text-slate-400">
+                                <Clock className="w-4 h-4" /> 미완료
+                              </span>
+                            )}
+                          </td>
+                        );
+                      })}
+                      <td className="p-3 text-center">
+                        <span className={`text-xs font-bold px-2 py-1 rounded-full ${
+                          doneEvals.length === evaluators.length
+                            ? 'bg-green-100 text-green-700'
+                            : doneEvals.length > 0
+                            ? 'bg-yellow-100 text-yellow-700'
+                            : 'bg-slate-100 text-slate-500'
+                        }`}>
+                          {doneEvals.length}/{evaluators.length}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Applicant Cards for Admin Evaluation Access */}
+        <div className="bg-white rounded-lg border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-100 bg-slate-50">
+            <h3 className="font-bold text-slate-700">지원자 서류 열람</h3>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 p-4">
+            {applicants.map(app => (
+              <button
+                key={app.id}
+                onClick={() => startEvaluation(app)}
+                className="flex flex-col items-center p-3 rounded-lg border border-slate-200 hover:border-blue-400 hover:bg-blue-50 transition-all text-center"
+              >
+                <FileText className="w-8 h-8 text-slate-400 mb-2" />
+                <span className="text-sm font-medium text-slate-700">{app.name}</span>
+                <span className="text-xs text-slate-400 mt-1">{app.originalFilename}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
   };
+
+  const EvaluatorDashboard = () => (
+    <div className="max-w-6xl mx-auto">
+      <div className="flex justify-between items-center mb-8">
+        <div>
+          <h2 className="text-2xl font-bold text-slate-800">지원자 목록</h2>
+          <ConnectionStatus />
+        </div>
+        <Button variant="secondary" onClick={() => setView('report')}>
+          <BarChart2 className="w-4 h-4 mr-2 inline" />
+          종합 결과 보기
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {applicants.map(app => {
+          const isDone = evaluations.some(e => e.applicantId === app.id && e.evaluatorId === currentUser?.id);
+          const myScore = evaluations.find(e => e.applicantId === app.id && e.evaluatorId === currentUser?.id)?.total;
+
+          return (
+            <div key={app.id} className={`bg-white rounded-lg shadow-sm border p-6 transition-all hover:shadow-md ${isDone ? 'border-green-200 bg-green-50' : 'border-slate-200'}`}>
+              <div className="flex justify-between items-start mb-4">
+                <div>
+                  <h3 className="text-lg font-bold text-slate-800">{app.name}</h3>
+                  <p className="text-xs text-slate-400 mt-1 flex items-center">
+                    <FileText className="w-3 h-3 mr-1" />{app.originalFilename}
+                  </p>
+                </div>
+                {isDone ? (
+                  <span className="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold flex items-center">
+                    <CheckCircle className="w-3 h-3 mr-1" /> 완료 ({myScore}점)
+                  </span>
+                ) : (
+                  <span className="bg-slate-100 text-slate-500 px-2 py-1 rounded text-xs font-bold">대기중</span>
+                )}
+              </div>
+              <div className="text-sm text-slate-500 mb-6">
+                <p>지원일자: {app.applicationDate}</p>
+              </div>
+              <Button
+                onClick={() => startEvaluation(app)}
+                variant={isDone ? 'secondary' : 'primary'}
+                className="w-full"
+              >
+                {isDone ? '평가 수정하기' : '평가 시작하기'}
+              </Button>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
@@ -351,7 +464,9 @@ function App() {
 
       {/* Main Content */}
       <main className="flex-1 p-6 no-print">
-        {view === 'dashboard' && <EvaluatorDashboard />}
+        {view === 'dashboard' && (
+          currentUser?.role === 'admin' ? <AdminDashboard /> : <EvaluatorDashboard />
+        )}
         
         {view === 'evaluate' && selectedApplicant && (
           <div className="h-[calc(100vh-7rem)] flex flex-col lg:flex-row gap-6">
