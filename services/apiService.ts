@@ -109,7 +109,7 @@ export const apiService = {
               position: row.position,
               applicationDate: row.application_date || new Date().toISOString().split('T')[0],
               pdfUrl: urlData.publicUrl,
-              originalFilename: row.file_path,
+              originalFilename: row.original_filename || row.file_path,
             };
           });
         }
