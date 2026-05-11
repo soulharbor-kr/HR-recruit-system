@@ -5,13 +5,23 @@ export interface Evaluator {
   role: 'evaluator' | 'admin';
 }
 
+export interface Session {
+  id: number;
+  name: string;
+  round: number;
+  year: number;
+  isActive: boolean;
+  createdAt: string;
+}
+
 export interface Applicant {
   id: string;
   name: string;
   position: string;
   applicationDate: string;
-  pdfUrl: string; // URL to the Google Drive PDF or public PDF
-  originalFilename?: string; // The parsed filename from Drive
+  pdfUrl: string;
+  originalFilename?: string;
+  sessionId?: number;
 }
 
 export interface ScoreCategory {

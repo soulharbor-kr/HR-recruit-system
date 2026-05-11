@@ -5,7 +5,7 @@ import { ScoreSlider } from './components/ScoreSlider';
 import { FinalReport } from './components/FinalReport';
 import { DevPlan } from './components/DevPlan';
 import { apiService } from './services/apiService';
-import { Applicant, Evaluator, EvaluationData, CATEGORIES } from './types';
+import { Applicant, Evaluator, EvaluationData, Session, CATEGORIES } from './types';
 import { FileText, LogOut, CheckCircle, User, BarChart2, Cloud, AlertCircle, CloudOff, Shield, Clock } from 'lucide-react';
 
 const INITIAL_SCORES = {
@@ -23,6 +23,8 @@ function App() {
   const [view, setView] = useState<'login' | 'dashboard' | 'evaluate' | 'report' | 'devPlan'>('login');
   
   // Data State
+  const [sessions, setSessions] = useState<Session[]>([]);
+  const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [applicants, setApplicants] = useState<Applicant[]>([]);
   const [evaluators, setEvaluators] = useState<Evaluator[]>([]);
   const [evaluations, setEvaluations] = useState<EvaluationData[]>([]);
@@ -61,9 +63,15 @@ function App() {
         setLoadingStep('기존 평가 데이터 동기화 중...');
         const scores = await apiService.getEvaluations();
         setEvaluations(scores);
-        
-        setLoadingStep('구글 드라이브(파일 ID 확인) 연결 중...');
-        const apps = await apiService.getApplicants();
+
+        setLoadingStep('회차 정보 불러오는 중...');
+        const sessionList = await apiService.getSessions();
+        setSessions(sessionList);
+        const active = sessionList.find(s => s.isActive) ?? sessionList[sessionList.length - 1] ?? null;
+        setCurrentSession(active);
+
+        setLoadingStep('지원자 목록 불러오는 중...');
+        const apps = await apiService.getApplicants(active?.id);
         setApplicants(apps);
       } catch (e) {
         console.error(e);
@@ -77,6 +85,19 @@ function App() {
       loadData();
     }
   }, [currentUser]);
+
+  // Reload applicants when admin switches session
+  const handleSessionChange = async (sessionId: number) => {
+    const session = sessions.find(s => s.id === sessionId) ?? null;
+    setCurrentSession(session);
+    setDataLoading(true);
+    try {
+      const apps = await apiService.getApplicants(sessionId);
+      setApplicants(apps);
+    } finally {
+      setDataLoading(false);
+    }
+  };
 
   // Handlers
   const handleLogin = async (e: React.FormEvent) => {
@@ -269,8 +290,9 @@ function App() {
   };
 
   const AdminDashboard = () => {
+    const sessionEvaluations = evaluations.filter(e => applicants.some(a => a.id === e.applicantId));
     const totalCount = evaluators.length * applicants.length;
-    const doneCount = evaluations.length;
+    const doneCount = sessionEvaluations.length;
     const progressPct = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
 
     return (
@@ -283,10 +305,28 @@ function App() {
             </div>
             <ConnectionStatus />
           </div>
-          <Button onClick={() => setView('report')}>
-            <BarChart2 className="w-4 h-4 mr-2 inline" />
-            종합 결과 보기
-          </Button>
+          <div className="flex items-center gap-3">
+            {sessions.length > 0 && (
+              <div className="flex items-center gap-2">
+                <label className="text-sm font-medium text-slate-600">회차 선택</label>
+                <select
+                  value={currentSession?.id ?? ''}
+                  onChange={e => handleSessionChange(Number(e.target.value))}
+                  className="border border-slate-300 rounded-lg px-3 py-2 text-sm text-slate-700 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  {sessions.map(s => (
+                    <option key={s.id} value={s.id}>
+                      {s.name}{s.isActive ? ' ✓' : ''}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            <Button onClick={() => setView('report')}>
+              <BarChart2 className="w-4 h-4 mr-2 inline" />
+              종합 결과 보기
+            </Button>
+          </div>
         </div>
 
         {/* Progress Summary */}
@@ -324,13 +364,13 @@ function App() {
               <tbody>
                 {applicants.map(app => {
                   const doneEvals = evaluators.filter(ev =>
-                    evaluations.some(e => e.applicantId === app.id && e.evaluatorId === ev.id)
+                    sessionEvaluations.some(e => e.applicantId === app.id && e.evaluatorId === ev.id)
                   );
                   return (
                     <tr key={app.id} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="p-3 font-medium text-slate-800">{app.name}</td>
                       {evaluators.map(ev => {
-                        const eval_ = evaluations.find(e => e.applicantId === app.id && e.evaluatorId === ev.id);
+                        const eval_ = sessionEvaluations.find(e => e.applicantId === app.id && e.evaluatorId === ev.id);
                         return (
                           <td key={ev.id} className="p-3 text-center">
                             {eval_ ? (
@@ -392,6 +432,9 @@ function App() {
       <div className="flex justify-between items-center mb-8">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">지원자 목록</h2>
+          {currentSession && (
+            <p className="text-sm text-blue-600 font-medium mt-1">{currentSession.name}</p>
+          )}
           <ConnectionStatus />
         </div>
         <Button variant="secondary" onClick={() => setView('report')}>

@@ -1,5 +1,5 @@
 import { supabase, SUPABASE_URL } from '../lib/supabase';
-import { Applicant, EvaluationData, Evaluator } from '../types';
+import { Applicant, EvaluationData, Evaluator, Session } from '../types';
 
 // --- MOCK DATA FOR FALLBACK ---
 const MOCK_EVALUATORS: Evaluator[] = [
@@ -88,13 +88,40 @@ export const apiService = {
     return MOCK_EVALUATORS.filter(u => u.role === 'evaluator');
   },
 
-  getApplicants: async (): Promise<Applicant[]> => {
+  getSessions: async (): Promise<Session[]> => {
     if (isSupabaseConfigured()) {
       try {
         const { data, error } = await supabase
-          .from('applicants')
+          .from('sessions')
           .select('*')
           .order('id', { ascending: true });
+
+        if (error) throw error;
+        if (data) {
+          return data.map((row: any) => ({
+            id: row.id,
+            name: row.name,
+            round: row.round,
+            year: row.year,
+            isActive: row.is_active,
+            createdAt: row.created_at,
+          }));
+        }
+      } catch (e) {
+        console.warn('Supabase getSessions failed.', e);
+      }
+    }
+    return [];
+  },
+
+  getApplicants: async (sessionId?: number): Promise<Applicant[]> => {
+    if (isSupabaseConfigured()) {
+      try {
+        let query = supabase.from('applicants').select('*').order('id', { ascending: true });
+        if (sessionId !== undefined) {
+          query = query.eq('session_id', sessionId);
+        }
+        const { data, error } = await query;
 
         if (error) throw error;
 
@@ -110,6 +137,7 @@ export const apiService = {
               applicationDate: row.application_date || new Date().toISOString().split('T')[0],
               pdfUrl: urlData.publicUrl,
               originalFilename: row.original_filename || row.file_path,
+              sessionId: row.session_id,
             };
           });
         }
